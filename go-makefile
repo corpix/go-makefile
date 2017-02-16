@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+# The MIT License (MIT)
+
+# Copyright © 2015 Dmitry Moskowski
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+from argparse import ArgumentParser
+import sys
+
+
+def format(ctx):
+    return TEMPLATE.format(**ctx)
+
+def go_get(package, commands=[]):
+    all_commands = ["go get {0}".format(package)] + commands
+    return """if [ ! -e "$(GOPATH)"/src/"{0}" ]; then {1}; fi""".format(
+        package,
+        " && ".join(all_commands)
+    )
+
+
+TEMPLATE = """.DEFAULT_GOAL  = all
+NAME           = {name}
+PACKAGE        = github.com/{user}/$(NAME)
+NUMCPUS        = $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
+VERSION        = $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
+LDFLAGS        = -X $(PACKAGE)/cmd.version=$(VERSION) \\
+                 -B 0x$(shell dd if=/dev/urandom bs=40 count=1 | sha1sum | awk '{{print $$1}}')
+
+all: tools
+
+$(NAME):
+	govendor remove +u
+	govendor add +e
+	govendor sync
+	mkdir -p build
+	go build -a -ldflags "$(LDFLAGS)" -v \\
+		-o build/$(NAME)             \\
+		$(PACKAGE)/$(NAME)
+
+
+test: tools
+	go test -v $(PACKAGE)/...
+
+lint: tools
+	go vet $(PACKAGE)/...
+	gometalinter                     \\
+		--deadline=5m            \\
+		--concurrency=$(NUMCPUS) \\
+		--exclude="(^|/)vendor/" \\
+		$(PACKAGE)/...
+
+check: lint test
+
+tools:
+	""" + go_get("github.com/kardianos/govendor") + """
+	""" + go_get("github.com/rogpeppe/godef") + """
+	""" + go_get("github.com/nsf/gocode") + """
+	""" + go_get("github.com/stretchr/testify/assert") + """
+	""" + go_get("github.com/alecthomas/gometalinter", ["gometalinter --install"]) + """
+
+.PHONY: all $(NAME) test lint check tools
+"""
+
+if __name__ == "__main__":
+    a = ArgumentParser()
+    a.add_argument(
+        "--name",
+        help="project name to hardcode into the makefile",
+        required=True
+    )
+    a.add_argument(
+        "--user",
+        help="github user to hardcode into the package name",
+        required=True
+    )
+    sys.stdout.write(
+        format(
+            a.parse_args().__dict__
+        )
+    )
