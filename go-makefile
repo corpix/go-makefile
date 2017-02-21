@@ -93,16 +93,16 @@ build: $(NAME)
 {docker_targets}
 .PHONY: test
 test: tools
-	go test -v $(PACKAGE)/...
+	go test -v ./...
 
 .PHONY: lint
 lint: tools
-	go vet $(PACKAGE)/...
+	go vet ./...
 	gometalinter                     \\
 		--deadline=5m            \\
 		--concurrency=$(NUMCPUS) \\
 		--exclude="(^|/)vendor/" \\
-		$(PACKAGE)/...
+		./...
 
 .PHONY: check
 check: lint test
