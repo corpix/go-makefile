@@ -63,7 +63,11 @@ Install required tools:
 
 ### `test`
 
-Will reach `tools` and `lint` targets after that will run tests for project package.
+Will reach `tools` target after that will run tests for project package.
+
+### `bench`
+
+Will reach `tools` target after that will run tests and benchmarks for project package.
 
 ### `$(NAME)`
 

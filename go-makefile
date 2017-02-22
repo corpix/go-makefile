@@ -95,6 +95,10 @@ build: $(NAME)
 test: tools
 	go test -v ./...
 
+.PHONY: bench
+bench: tools
+	go test -bench=. -v ./...
+
 .PHONY: lint
 lint: tools
 	go vet ./...
