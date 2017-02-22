@@ -67,7 +67,7 @@ def docker(ctx):
 
 TEMPLATE = """.DEFAULT_GOAL  = all
 NAME           = {name}
-PACKAGE        = github.com/{user}/$(NAME)
+PACKAGE        = {host}/{user}/$(NAME)
 NUMCPUS        = $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
 VERSION        = $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
 LDFLAGS        = -X $(PACKAGE)/cmd.version=$(VERSION) \\
@@ -128,8 +128,13 @@ if __name__ == "__main__":
         required=True
     )
     a.add_argument(
+        "--host",
+        help="host to hardcode as part of the package url",
+        default="github.com"
+    )
+    a.add_argument(
         "--user",
-        help="github user to hardcode into the package name",
+        help="user to hardcode into the package name as part of url",
         required=True
     )
     a.add_argument(
