@@ -13,8 +13,8 @@ To make it work out of the box project should have layout like this:
 
 ``` text
 ~/go/src/github.com/corpix/hello
-├── cmd
-│   └── cmd.go
+├── cli
+│   └── cli.go
 └── hello
     └── main.go
 ```
@@ -22,14 +22,14 @@ To make it work out of the box project should have layout like this:
 Where:
 
 - `hello/main.go` is an entrypoint
-- `cmd/cmd.go` is a part of the package `cmd`
+- `cli/cli.go` is a part of the package `cli`
 
-## `cmd/cmd.go`
+## `cli/cli.go`
 
 It should have `version` variable to allow linker automatically tag a build with version.
 
 ``` go
-package cmd
+package cli
 
 var version string
 
@@ -110,7 +110,7 @@ Linker flags.
 
 It does two things:
 
-- set the version into `$(PACKAGE)/cmd.version` variable
+- set the version into `$(PACKAGE)/cli.version` variable
 - generates random `NT_GNU_BUILD_ID` which is useful to identify the build
 
 # License

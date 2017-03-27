@@ -70,7 +70,7 @@ NAME           = {name}
 PACKAGE        = {host}/{user}/$(NAME)
 NUMCPUS        = $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
 VERSION        = $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
-LDFLAGS        = -X $(PACKAGE)/cmd.version=$(VERSION) \\
+LDFLAGS        = -X $(PACKAGE)/cli.version=$(VERSION) \\
                  -B 0x$(shell dd if=/dev/urandom bs=40 count=1 | sha1sum | awk '{{print $$1}}')
 
 {docker_variables}
