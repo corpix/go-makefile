@@ -66,12 +66,15 @@ def docker(ctx):
 
 
 TEMPLATE = """.DEFAULT_GOAL  = all
+
+build_id      := 0x$(shell dd if=/dev/urandom bs=40 count=1 | sha1sum | awk '{{print $$1}}')
+
 NAME           = {name}
 PACKAGE        = {host}/{user}/$(NAME)
 NUMCPUS        = $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
 VERSION        = $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
 LDFLAGS        = -X $(PACKAGE)/cli.version=$(VERSION) \\
-                 -B 0x$(shell dd if=/dev/urandom bs=40 count=1 | sha1sum | awk '{{print $$1}}')
+                 -B $(build_id)
 
 {docker_variables}
 .PHONY: all
@@ -83,6 +86,7 @@ $(NAME):
 	govendor add +e
 	govendor sync
 	mkdir -p build
+	@echo "Build id: $(build_id)"
 	go build -a -ldflags "$(LDFLAGS)" -v \\
 		-o build/$(NAME)             \\
 		$(PACKAGE)/$(NAME)
