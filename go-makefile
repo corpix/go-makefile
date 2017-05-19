@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from argparse import ArgumentParser
+from os.path import basename
 import sys
 
 
@@ -34,6 +35,13 @@ def go_get(package, commands=[]):
     all_commands = ["go get {0}".format(package)] + commands
     return """if [ ! -e "$(GOPATH)"/src/"{0}" ]; then {1}; fi""".format(
         package,
+        " && ".join(all_commands)
+    )
+
+def go_get_bin(package, commands=[]):
+    all_commands = ["go get {0}".format(package)] + commands
+    return """if [ ! -e "$(GOPATH)"/bin/"{0}" ]; then {1}; fi""".format(
+        basename(package),
         " && ".join(all_commands)
     )
 
@@ -117,11 +125,11 @@ check: lint test
 
 .PHON: tools
 tools:
-	""" + go_get("github.com/kardianos/govendor") + """
-	""" + go_get("github.com/rogpeppe/godef") + """
-	""" + go_get("github.com/nsf/gocode") + """
+	""" + go_get_bin("github.com/kardianos/govendor") + """
+	""" + go_get_bin("github.com/rogpeppe/godef") + """
+	""" + go_get_bin("github.com/nsf/gocode") + """
+	""" + go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]) + """
 	""" + go_get("github.com/stretchr/testify/assert") + """
-	""" + go_get("github.com/alecthomas/gometalinter", ["gometalinter --install"]) + """
 """
 
 if __name__ == "__main__":
