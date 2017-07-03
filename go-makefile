@@ -123,7 +123,7 @@ lint: tools
 .PHONY: check
 check: lint test
 
-.PHON: tools
+.PHONY: tools
 tools:
 	""" + go_get_bin("github.com/kardianos/govendor") + """
 	""" + go_get_bin("github.com/rogpeppe/godef") + """
