@@ -56,7 +56,7 @@ ldflags  := -X $(package)/cli.version=$(version) \\
 all: dependencies
 
 .PHONY: $(name)
-$(NAME): dependencies
+$(name): dependencies
 	mkdir -p $(build)
 	@echo "Build id: $(build_id)"
 	go build -a -ldflags "$(ldflags)" -v \\
