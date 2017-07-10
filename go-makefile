@@ -25,10 +25,7 @@ from os.path import basename
 import sys
 
 def format(ctx):
-    resolved_ctx = ctx.copy()
-    resolved_ctx.update(docker(ctx))
-
-    return TEMPLATE.format(**resolved_ctx)
+    return TEMPLATE.format(**ctx)
 
 def go_get(package, commands=[]):
     all_commands = ["go get {0}".format(package)] + commands
@@ -44,34 +41,6 @@ def go_get_bin(package, commands=[]):
         " && ".join(all_commands)
     )
 
-def docker(ctx):
-    if ctx["docker"]:
-        return {
-            "docker_variables": "\n".join(
-                [
-                    "docker          := {docker_command}",
-                    "build_container := {user}/$(project)/build",
-                    "docker_run      := $(docker) run  \\",
-                    "	-v $(GOPATH):/go          \\",
-                    "	-it",
-                    ""
-                ]
-            ).format(**ctx),
-            "docker_targets": "\n".join(
-                [
-                    ".PHONY: build-in-docker",
-                    "build-in-docker:",
-                    "	$(docker_run) $(build_container) make -C /go/src/$(package) build",
-                    ""
-                ]
-            ).format(**ctx)
-        }
-    return {
-        "docker_variables": "",
-        "docker_targets": ""
-    }
-
-
 TEMPLATE = """.DEFAULT_GOAL  = all
 
 name     := {name}
@@ -83,7 +52,6 @@ build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | 
 ldflags  := -X $(package)/cli.version=$(version) \\
             -B $(build_id)
 
-{docker_variables}
 .PHONY: all
 all: dependencies
 
@@ -98,7 +66,6 @@ $(NAME): dependencies
 .PHONY: build
 build: $(name)
 
-{docker_targets}
 .PHONY: test
 test: tools
 	go test -v \\
@@ -155,16 +122,6 @@ if __name__ == "__main__":
         "--user",
         help="User to hardcode into the package name as part of url",
         required=True
-    )
-    a.add_argument(
-        "--docker",
-        help="Include docker support into Makefile",
-        action="store_true"
-    )
-    a.add_argument(
-        "--docker-command",
-        help="Docker command line to use in Makefile",
-        default="sudo docker"
     )
     sys.stdout.write(
         format(
