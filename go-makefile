@@ -41,7 +41,7 @@ def go_get_bin(package, commands=[]):
         " && ".join(all_commands)
     )
 
-TEMPLATE = """.DEFAULT_GOAL  = all
+TEMPLATE = """.DEFAULT_GOAL = all
 
 name     := {name}
 package  := {host}/{user}/$(name)
