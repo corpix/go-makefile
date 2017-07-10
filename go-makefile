@@ -24,7 +24,6 @@ from argparse import ArgumentParser
 from os.path import basename
 import sys
 
-
 def format(ctx):
     resolved_ctx = ctx.copy()
     resolved_ctx.update(docker(ctx))
@@ -33,14 +32,14 @@ def format(ctx):
 
 def go_get(package, commands=[]):
     all_commands = ["go get {0}".format(package)] + commands
-    return """if [ ! -e "$(GOPATH)"/src/"{0}" ]; then {1}; fi""".format(
+    return """@if [ ! -e "$(GOPATH)"/src/"{0}" ]; then {1}; fi""".format(
         package,
         " && ".join(all_commands)
     )
 
 def go_get_bin(package, commands=[]):
     all_commands = ["go get {0}".format(package)] + commands
-    return """if [ ! -e "$(GOPATH)"/bin/"{0}" ]; then {1}; fi""".format(
+    return """@if [ ! -e "$(GOPATH)"/bin/"{0}" ]; then {1}; fi""".format(
         basename(package),
         " && ".join(all_commands)
     )
@@ -75,88 +74,96 @@ def docker(ctx):
 
 TEMPLATE = """.DEFAULT_GOAL  = all
 
-build_id      := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
-
-NAME           = {name}
-PACKAGE        = {host}/{user}/$(NAME)
-NUMCPUS        = $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
-VERSION        = $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
-LDFLAGS        = -X $(PACKAGE)/cli.version=$(VERSION) \\
-                 -B $(build_id)
+name     := {name}
+package  := {host}/{user}/$(name)
+build    := ./build
+numcpus  := $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
+version  := $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
+build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
+ldflags  := -X $(package)/cli.version=$(version) \\
+            -B $(build_id)
 
 {docker_variables}
 .PHONY: all
-all: tools
+all: dependencies
 
-.PHONY: $(NAME)
-$(NAME):
-	govendor remove +u
-	govendor add +e
-	govendor sync
-	mkdir -p build
+.PHONY: $(name)
+$(NAME): dependencies
+	mkdir -p $(build)
 	@echo "Build id: $(build_id)"
-	go build -a -ldflags "$(LDFLAGS)" -v \\
-		-o build/$(NAME)             \\
-		$(PACKAGE)/$(NAME)
+	go build -a -ldflags "$(ldflags)" -v \\
+                 -o build/$(name)            \\
+                 $(package)/$(name)
 
 .PHONY: build
-build: $(NAME)
+build: $(name)
 
 {docker_targets}
 .PHONY: test
 test: tools
-	go test -v ./...
+	go test -v \\
+           $(shell glide novendor)
 
 .PHONY: bench
 bench: tools
-	go test -bench=. -v ./...
+	go test        \\
+           -bench=. -v \\
+           $(shell glide novendor)
 
 .PHONY: lint
 lint: tools
-	go vet ./...
+	go vet $(shell glide novendor)
 	gometalinter                     \\
 		--deadline=5m            \\
-		--concurrency=$(NUMCPUS) \\
-		--exclude="(^|/)vendor/" \\
-		./...
+		--concurrency=$(numcpus) \\
+		$(shell glide novendor)
 
 .PHONY: check
 check: lint test
 
 .PHONY: tools
 tools:
-	""" + go_get_bin("github.com/kardianos/govendor") + """
+	""" + go_get_bin("github.com/Masterminds/glide") + """
 	""" + go_get_bin("github.com/rogpeppe/godef") + """
 	""" + go_get_bin("github.com/nsf/gocode") + """
 	""" + go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]) + """
 	""" + go_get("github.com/stretchr/testify/assert") + """
+
+.PHONY: dependencies
+dependencies: tools
+	glide install
+
+.PHONY: clean
+clean:
+	rm -rf $(build)
+	glide cache-clear
 """
 
 if __name__ == "__main__":
     a = ArgumentParser()
     a.add_argument(
         "--name",
-        help="project name to hardcode into the Makefile",
+        help="Project name to hardcode into the Makefile",
         required=True
     )
     a.add_argument(
         "--host",
-        help="host to hardcode as part of the package url",
+        help="Host to hardcode as part of the package url",
         default="github.com"
     )
     a.add_argument(
         "--user",
-        help="user to hardcode into the package name as part of url",
+        help="User to hardcode into the package name as part of url",
         required=True
     )
     a.add_argument(
         "--docker",
-        help="include docker support into Makefile",
+        help="Include docker support into Makefile",
         action="store_true"
     )
     a.add_argument(
         "--docker-command",
-        help="docker command line to use in Makefile",
+        help="Docker command line to use in Makefile",
         default="sudo docker"
     )
     sys.stdout.write(
