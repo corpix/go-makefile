@@ -1,4 +1,5 @@
-* TODO Divide package and application
+* DONE Divide package and application
+  CLOSED: [2017-07-11 Tue 23:57]
   They should have different =Makefile= content.
   In case of application we need =ldflags= and other things
   which irrelevant to package.

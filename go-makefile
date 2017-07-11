@@ -21,48 +21,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from argparse import ArgumentParser
+from functools import reduce
 from os.path import basename
 import sys
 
-template = """
-.DEFAULT_GOAL = all
+package_kind     = "package"
+application_kind = "application"
+kinds = [
+    package_kind,
+    application_kind,
+]
 
+# Package Makefile parts
+
+package_variables = """
 name     := {name}
 package  := {host}/{user}/$(name)
-build    := ./build
-numcpus  := $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
-version  := $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
-build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
-ldflags  := -X $(package)/cli.version=$(version) \\
-            -B $(build_id)
+"""
 
-.PHONY: all
-all: $(name)
-
-.PHONY: $(name)
-$(name): dependencies
-	mkdir -p $(build)
-	@echo "Build id: $(build_id)"
-	go build -a -ldflags "$(ldflags)" -v \\
-                 -o build/$(name)            \\
-                 $(package)/$(name)
-
-.PHONY: build
-build: $(name)
-
+package_targets = """
 .PHONY: test
-test: dependencies
+test:: dependencies
 	go test -v \\
            $(shell glide novendor)
 
 .PHONY: bench
-bench: dependencies
+bench:: dependencies
 	go test        \\
            -bench=. -v \\
            $(shell glide novendor)
 
 .PHONY: lint
-lint: dependencies
+lint:: dependencies
 	go vet $(shell glide novendor)
 	gometalinter                     \\
 		--deadline=5m            \\
@@ -70,20 +60,66 @@ lint: dependencies
 		$(shell glide novendor)
 
 .PHONY: check
-check: lint test
+check:: lint test
+"""
+
+# Application Makefile parts
+# Each application is a package
+# (it will include package_variables + package_targets)
+
+application_variables = """
+build    := ./build
+build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
+ldflags  := -X $(package)/cli.version=$(version) \\
+            -B $(build_id)
+"""
+
+application_targets = """
+.PHONY: all
+all:: $(name)
+
+.PHONY: $(name)
+$(name):: dependencies
+	mkdir -p $(build)
+	@echo "Build id: $(build_id)"
+	go build -a -ldflags "$(ldflags)" -v \\
+                 -o build/$(name)            \\
+                 $(package)/$(name)
+
+.PHONY: build
+build:: $(name)
+
+.PHONY: clean
+clean::
+	rm -rf $(build)
+"""
+
+makefile = """
+.DEFAULT_GOAL = all
+
+numcpus  := $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
+version  := $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
+{package_variables}
+{application_variables}
+
+.PHONY: all
+all::
 
 .PHONY: tools
-tools:
+tools::
 	{tools}
 
 .PHONY: dependencies
-dependencies: tools
+dependencies:: tools
 	glide install
 
 .PHONY: clean
-clean: tools
-	rm -rf $(build)
+clean:: tools
 	glide cache-clear
+
+{package_targets}
+
+{application_targets}
 """
 
 def indented(l, level=1, prefix="\t", suffix="\n"):
@@ -99,12 +135,40 @@ def format(ctx):
             go_get_bin("github.com/nsf/gocode"),
             go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]),
             go_get_src("github.com/stretchr/testify/assert"),
-        ] + [go_get_bin(tool) for tool in ctx["tool"] or []]
+        ] + [go_get_bin(tool) for tool in ctx["tool"]]
     )
-    return template.format(
-        tools=tools,
-        **ctx
+    nctx = ctx.copy()
+    nctx.update(
+        {"tools": tools}
     )
+
+    package = {
+        "package_variables": "",
+        "package_targets": "",
+    }
+    if nctx["kind"] == package_kind or nctx["kind"] == application_kind:
+        package["package_variables"] = package_variables.format(**nctx).rstrip()
+        package["package_targets"]   = package_targets.format(**nctx).rstrip()
+
+    application = {
+        "application_variables": "",
+        "application_targets": "",
+    }
+    if nctx["kind"] == application_kind:
+        application["application_variables"] = application_variables.format(**nctx).rstrip()
+        application["application_targets"]   = application_targets.format(**nctx).rstrip()
+
+    nctx.update(package)
+    nctx.update(application)
+
+    return "\n".join(
+        reduce(
+            # Eliminate two or more empty lines in output
+            lambda acc, v: acc+([v] if len(acc) == 0 or acc[-1] != v else []),
+            (makefile.format(**nctx).rstrip() + "\n").split("\n"),
+            []
+        )
+    ).lstrip()
 
 def go_get(package, predicate, commands=[]):
     all_commands = [
@@ -130,31 +194,75 @@ def go_get_bin(package, commands=[]):
         commands
     )
 
+def main(args):
+    if args["kind"] not in kinds:
+        raise KeyError(
+            "Unsupported kind '{}', supported kinds are: {}".format(
+                args["kind"],
+                kinds
+            )
+        )
+    sys.stdout.write(
+        format(
+            args
+        )
+    )
+
 
 if __name__ == "__main__":
-    a = ArgumentParser()
-    a.add_argument(
+    def has_prefix(v, prefix):
+        return v == prefix or v.startswith(prefix or "")
+
+    def match(full, part):
+        vs = [
+            v
+            for v in full
+            if has_prefix(v, part)
+        ]
+        if len(vs) == 0:
+            return part
+        if len(vs) > 1:
+            raise RuntimeError(
+                "Ambiguous name '{}', did you mean one of these? {}".format(
+                    part,
+                    vs
+                )
+            )
+        return vs[0]
+
+    def normalize(args):
+        nargs = args.copy()
+        nargs["kind"] = match(kinds, args["kind"].lower().strip())
+        return nargs
+
+    p = ArgumentParser()
+    p.add_argument(
+        "kind",
+        help="Kind of Makefile to generate, should be on of: {}".format(kinds)
+    )
+    p.add_argument(
         "--name",
         help="Project name to hardcode into the Makefile",
         required=True
     )
-    a.add_argument(
+    p.add_argument(
         "--host",
         help="Host to hardcode as part of the package url",
         default="github.com"
     )
-    a.add_argument(
+    p.add_argument(
         "--user",
         help="User to hardcode into the package name as part of url",
         required=True
     )
-    a.add_argument(
+    p.add_argument(
         "--tool",
         help="List of tools to install in addition to the default",
-        nargs="+"
+        nargs="+",
+        default=[]
     )
-    sys.stdout.write(
-        format(
-            a.parse_args().__dict__
+    main(
+        normalize(
+            p.parse_args().__dict__
         )
     )
