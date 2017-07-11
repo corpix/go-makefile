@@ -1,0 +1,14 @@
+* TODO Divide package and application
+  They should have different =Makefile= content.
+  In case of application we need =ldflags= and other things
+  which irrelevant to package.
+* TODO Default version policy
+* TODO Stop using random build id
+  Random build id was a quick decision made to build code
+  into RPM packages, now I think it is a good idea to have
+  predictable build id which should be repeatable and based
+  on version.
+* TODO User defined includes
+* TODO Cache file
+  Generate a cache file which could be save in project repository
+  to regenerate =Makefile= in the future.
