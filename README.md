@@ -54,12 +54,16 @@ By default it will install all required tools to the current `GOPATH` by reachin
 
 Install required tools:
 
-- [govendor](github.com/kardianos/govendor)
+- [glide](github.com/Masterminds/glide)
 - [godef](github.com/rogpeppe/godef)
 - [gocode](github.com/nsf/gocode)
 - [testify/assert](github.com/stretchr/testify/assert)
 - [gometalinter](github.com/alecthomas/gometalinter)
 - and all linters supported my gometalinter
+
+### `dependencies`
+
+Install dependencies with glide.
 
 ### `test`
 
@@ -69,7 +73,7 @@ Will reach `tools` target after that will run tests for project package.
 
 Will reach `tools` target after that will run tests and benchmarks for project package.
 
-### `$(NAME)`
+### `$(name)`
 
 > Name of this target depends on the `--name` flag which you should specify to generate a `Makefile`.
 
@@ -77,13 +81,13 @@ It will build a binary release for the project.
 
 ## Variables
 
-### `NAME`
+### `name`
 
 Name of the project.
 
 It depends on the `--name` flag which you should specify to generate a `Makefile`.
 
-### `PACKAGE`
+### `package`
 
 Package of the project.
 
@@ -91,11 +95,11 @@ This is an absolute package name which should be used to import your project lik
 
 It depends on the `--project` flag which you should specify to generate a `Makefile`.
 
-### `NUMCPUS`
+### `numcpus`
 
 Just a number of processor cores available on the current system.
 
-### `VERSION`
+### `version`
 
 Version number retrieved from the git version control.
 
@@ -104,7 +108,7 @@ It will look like `100.abcdef` where:
 - `100` is a commit count from the first commit to `HEAD`
 - `abcdef` is a short `HEAD` sha1 sum
 
-### `LDFLAGS`
+### `ldflags`
 
 Linker flags.
 
