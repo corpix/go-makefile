@@ -24,24 +24,8 @@ from argparse import ArgumentParser
 from os.path import basename
 import sys
 
-def format(ctx):
-    return TEMPLATE.format(**ctx)
-
-def go_get(package, commands=[]):
-    all_commands = ["go get {0}".format(package)] + commands
-    return """@if [ ! -e "$(GOPATH)"/src/"{0}" ]; then {1}; fi""".format(
-        package,
-        " && ".join(all_commands)
-    )
-
-def go_get_bin(package, commands=[]):
-    all_commands = ["go get {0}".format(package)] + commands
-    return """@if [ ! -e "$(GOPATH)"/bin/"{0}" ]; then {1}; fi""".format(
-        basename(package),
-        " && ".join(all_commands)
-    )
-
-TEMPLATE = """.DEFAULT_GOAL = all
+template = """
+.DEFAULT_GOAL = all
 
 name     := {name}
 package  := {host}/{user}/$(name)
@@ -90,11 +74,7 @@ check: lint test
 
 .PHONY: tools
 tools:
-	""" + go_get_bin("github.com/Masterminds/glide") + """
-	""" + go_get_bin("github.com/rogpeppe/godef") + """
-	""" + go_get_bin("github.com/nsf/gocode") + """
-	""" + go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]) + """
-	""" + go_get("github.com/stretchr/testify/assert") + """
+	{tools}
 
 .PHONY: dependencies
 dependencies: tools
@@ -105,6 +85,51 @@ clean:
 	rm -rf $(build)
 	glide cache-clear
 """
+
+def indented(l, level=1, prefix="\t", suffix="\n"):
+    return (prefix*level).join(
+        [v+suffix for v in l]
+    )
+
+def format(ctx):
+    tools = indented(
+        [
+            go_get_bin("github.com/Masterminds/glide"),
+            go_get_bin("github.com/rogpeppe/godef"),
+            go_get_bin("github.com/nsf/gocode"),
+            go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]),
+            go_get_src("github.com/stretchr/testify/assert"),
+        ] + [go_get_bin(tool) for tool in ctx["tool"] or []]
+    )
+    return template.format(
+        tools=tools,
+        **ctx
+    )
+
+def go_get(package, predicate, commands=[]):
+    all_commands = [
+        "go get {0}".format(package)
+    ] + commands
+
+    return """@if [ {predicate} ]; then {commands}; fi""".format(
+        predicate=predicate,
+        commands=" && ".join(all_commands)
+    )
+
+def go_get_src(package, commands=[]):
+    return go_get(
+        package,
+        """! -e "$(GOPATH)"/src/{}""".format(package),
+        commands
+    )
+
+def go_get_bin(package, commands=[]):
+    return go_get(
+        package,
+        """! -e "$(GOPATH)"/bin/{}""".format(basename(package)),
+        commands
+    )
+
 
 if __name__ == "__main__":
     a = ArgumentParser()
@@ -122,6 +147,11 @@ if __name__ == "__main__":
         "--user",
         help="User to hardcode into the package name as part of url",
         required=True
+    )
+    a.add_argument(
+        "--tool",
+        help="List of tools to install in addition to the default",
+        nargs="+"
     )
     sys.stdout.write(
         format(

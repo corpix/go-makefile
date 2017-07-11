@@ -44,6 +44,20 @@ go-makefile --user your-name --name project-name > Makefile
 
 This will write content to the `Makefile` in the current directory.
 
+If you need additional tools to be installed automatically by `Makefile` then
+you could pass `--tool` parameter in this manner:
+
+``` shell
+go-makefile                        \
+    --user your-name               \
+    --name project-name            \
+    --tool                         \
+    github.com/corpix/awesome-tool \
+    github.com/corpix/way-cooler-tool
+```
+
+All of them will be appended to the list of the tools which installed by default.
+
 ## Goals
 
 ### `all`
@@ -116,6 +130,7 @@ It does two things:
 
 - set the version into `$(PACKAGE)/cli.version` variable
 - generates random `NT_GNU_BUILD_ID` which is useful to identify the build
+
 
 # License
 
