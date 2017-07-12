@@ -86,9 +86,18 @@ you could define your custom logic for any `Makefile` rule using includes.
 
 ### `all`
 
-By default it will install all required tools to the current `GOPATH` by reaching the `tools` goal.
+> Available for `--kind package` and `--kind application`.
+
+For `--kind package`:
+- install all dependencies
+
+For `--kind application`:
+- install all dependencies
+- build an application
 
 ### `tools`
+
+> Available for `--kind package` and `--kind application`.
 
 Install required tools:
 
@@ -101,18 +110,25 @@ Install required tools:
 
 ### `dependencies`
 
+> Available for `--kind package` and `--kind application`.
+
 Install dependencies with glide.
 
 ### `test`
 
-Will reach `tools` target after that will run tests for project package.
+> Available for `--kind package` and `--kind application`.
+
+Will reach `dependencies` target after that will run tests for project package.
 
 ### `bench`
 
-Will reach `tools` target after that will run tests and benchmarks for project package.
+> Available for `--kind package` and `--kind application`.
+
+Will reach `dependencies` target after that will run tests and benchmarks for project package.
 
 ### `$(name)`
 
+> Available only for `--kind application`. <br/>
 > Name of this target depends on the `--name` flag which you should specify to generate a `Makefile`.
 
 It will build a binary release for the project.
