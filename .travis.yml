@@ -6,8 +6,6 @@ addons:
       - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
       - python3.5
-      - gcc-6
-      - g++-6
 install:
   - mkdir -p bin
   - ln -s /usr/bin/python3.5 bin/python3
