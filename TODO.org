@@ -5,7 +5,8 @@
   which irrelevant to package.
 * DONE Default version policy
   CLOSED: [2017-07-12 Wed 00:08]
-* TODO Stop using random build id
+* DONE Stop using random build id
+  CLOSED: [2017-07-12 Wed 00:11]
   Random build id was a quick decision made to build code
   into RPM packages, now I think it is a good idea to have
   predictable build id which should be repeatable and based

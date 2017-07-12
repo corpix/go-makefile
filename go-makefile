@@ -69,7 +69,7 @@ check:: lint test
 
 application_variables = """
 build    := ./build
-build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
+build_id := {build_id_generator}
 ldflags  := -X $(package)/{version_variable}=$(version) \\
             -B $(build_id)
 """
@@ -273,6 +273,11 @@ if __name__ == "__main__":
         "--version-generator",
         help="Version generator code in Make",
         default="$(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)"
+    )
+    p.add_argument(
+        "--build-id-generator",
+        help="Build ID generator code in Make",
+        default="0x$(shell echo $(version) | sha1sum | awk '{print $$1}')"
     )
 
     #
