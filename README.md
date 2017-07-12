@@ -52,7 +52,7 @@ Application `Makefile` will contain everything the package needs but not vice ve
 > `package     -> pack -> p` <br/>
 
 ``` shell
-go-makefile app --user your-name --name project-name > Makefile
+go-makefile --kind app --user your-name --name project-name > Makefile
 ```
 
 This will write content to the `Makefile` in the current directory.
@@ -64,7 +64,7 @@ you could pass `--tool` parameter in this manner:
 
 ``` shell
 go-makefile                        \
-    app                            \
+    --kind app                     \
     --user your-name               \
     --name project-name            \
     --tool                         \
@@ -80,7 +80,7 @@ If you need additional includes you could pass `--include` parameter in this man
 
 ``` shell
 go-makefile             \
-    app                 \
+    --kind app          \
     --user your-name    \
     --name project-name \
     --include           \
@@ -89,6 +89,24 @@ go-makefile             \
 ```
 
 All of them will be appended to the list of the includes which will be appended to the end of the `Makefile`.
+
+## Saving configuration
+
+You could save parameters which was used to generate `Makefile`.
+
+There are `--read-config` and `--write-config` arguments.
+
+To write your config while generating `Makefile` you could use:
+
+``` shell
+go-makefile --kind app --user your-name --name project-name --write-config go-makefile.json
+```
+
+To read previously stored config and use them to generate `Makefile`:
+
+``` shell
+go-makefile --read-config go-makefile.json
+```
 
 ## Goals
 

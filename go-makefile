@@ -22,7 +22,8 @@
 # THE SOFTWARE.
 from argparse import ArgumentParser
 from functools import reduce
-from os.path import basename
+from json import load as json_unmarshal, dump as json_marshal
+from os.path import basename, expanduser, abspath
 import sys
 
 package_kind     = "package"
@@ -200,18 +201,22 @@ def go_get_bin(package, commands=[]):
     )
 
 def main(args):
-    if args["kind"] not in kinds:
-        raise KeyError(
-            "Unsupported kind '{}', supported kinds are: {}".format(
-                args["kind"],
-                kinds
-            )
-        )
     sys.stdout.write(
         format(
             args
         )
     )
+    if args["write_config"]:
+        p = abspath(expanduser(args["write_config"]))
+        with open(p, "w") as stream:
+            json_marshal(
+                args,
+                stream,
+                indent=4,
+                sort_keys=True,
+                ensure_ascii=False
+            )
+            stream.write("\n")
 
 
 if __name__ == "__main__":
@@ -235,20 +240,48 @@ if __name__ == "__main__":
             )
         return vs[0]
 
+    def check(args):
+        if args["kind"] not in kinds:
+            raise KeyError(
+                "Unsupported kind '{}', supported kinds are: {}".format(
+                    args["kind"],
+                    kinds
+                )
+            )
+        return args
+
     def normalize(args):
         nargs = args.copy()
         nargs["kind"] = match(kinds, args["kind"].lower().strip())
         return nargs
 
+    def validate(args):
+        if args["name"] == "":
+            raise KeyError("You should specify name of the project")
+        if args["user"] == "":
+            raise KeyError("You should specify user name to generate repository url")
+        return args
+
+    def configure(args):
+        if not args["read_config"]:
+            return args
+
+        p = abspath(expanduser(args["read_config"]))
+        with open(p, "r") as stream:
+            nargs = args.copy()
+            nargs.update(
+                **json_unmarshal(stream)
+            )
+            return nargs
+
     p = ArgumentParser()
     p.add_argument(
-        "kind",
+        "--kind",
         help="Kind of Makefile to generate, should be on of: {}".format(kinds)
     )
     p.add_argument(
         "--name",
-        help="Project name to hardcode into the Makefile",
-        required=True
+        help="Project name to hardcode into the Makefile"
     )
     p.add_argument(
         "--host",
@@ -257,8 +290,7 @@ if __name__ == "__main__":
     )
     p.add_argument(
         "--user",
-        help="User to hardcode into the package name as part of url",
-        required=True
+        help="User to hardcode into the package name as part of url"
     )
     p.add_argument(
         "--tool",
@@ -293,8 +325,23 @@ if __name__ == "__main__":
 
     #
 
+    p.add_argument(
+        "--read-config",
+        help="Read configuration from specified file"
+    )
+    p.add_argument(
+        "--write-config",
+        help="Write configuration to specified file"
+    )
+
     main(
-        normalize(
-            p.parse_args().__dict__
+        check(
+            normalize(
+                validate(
+                    configure(
+                        p.parse_args().__dict__
+                    )
+                )
+            )
         )
     )
