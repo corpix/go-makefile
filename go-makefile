@@ -70,7 +70,7 @@ check:: lint test
 application_variables = """
 build    := ./build
 build_id := 0x$(shell dd if=/dev/urandom bs=40 count=1 2> /dev/null | sha1sum | awk '{{print $$1}}')
-ldflags  := -X $(package)/cli.version=$(version) \\
+ldflags  := -X $(package)/{version_variable}=$(version) \\
             -B $(build_id)
 """
 
@@ -261,6 +261,17 @@ if __name__ == "__main__":
         nargs="+",
         default=[]
     )
+
+    #
+
+    p.add_argument(
+        "--version-variable",
+        help="Version variable name inside your application package",
+        default="cli.version"
+    )
+
+    #
+
     main(
         normalize(
             p.parse_args().__dict__
