@@ -98,7 +98,7 @@ makefile = """
 .DEFAULT_GOAL = all
 
 numcpus  := $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
-version  := $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
+version  := {version_generator}
 {package_variables}
 {application_variables}
 
@@ -268,6 +268,11 @@ if __name__ == "__main__":
         "--version-variable",
         help="Version variable name inside your application package",
         default="cli.version"
+    )
+    p.add_argument(
+        "--version-generator",
+        help="Version generator code in Make",
+        default="$(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)"
     )
 
     #

@@ -3,7 +3,8 @@
   They should have different =Makefile= content.
   In case of application we need =ldflags= and other things
   which irrelevant to package.
-* TODO Default version policy
+* DONE Default version policy
+  CLOSED: [2017-07-12 Wed 00:08]
 * TODO Stop using random build id
   Random build id was a quick decision made to build code
   into RPM packages, now I think it is a good idea to have
