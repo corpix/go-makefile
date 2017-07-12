@@ -207,10 +207,18 @@ def main(args):
         )
     )
     if args["write_config"]:
-        p = abspath(expanduser(args["write_config"]))
+        nargs = args.copy()
+        p = abspath(
+            expanduser(
+                nargs["write_config"]
+            )
+        )
+        del nargs["write_config"]
+        del nargs["read_config"]
+
         with open(p, "w") as stream:
             json_marshal(
-                args,
+                nargs,
                 stream,
                 indent=4,
                 sort_keys=True,
