@@ -57,6 +57,8 @@ go-makefile app --user your-name --name project-name > Makefile
 
 This will write content to the `Makefile` in the current directory.
 
+--------------------------------------------------------------------------------------
+
 If you need additional tools to be installed automatically by `Makefile` then
 you could pass `--tool` parameter in this manner:
 
@@ -72,7 +74,26 @@ go-makefile                        \
 
 All of them will be appended to the list of the tools which installed by default.
 
+--------------------------------------------------------------------------------------
+
+If you need additional includes you could pass `--include` parameter in this manner:
+
+``` shell
+go-makefile             \
+    app                 \
+    --user your-name    \
+    --name project-name \
+    --include           \
+    build.mk            \
+    ci.mk
+```
+
+All of them will be appended to the list of the includes which will be appended to the end of the `Makefile`.
+
 ## Goals
+
+Each goal is a [double-colon](https://www.gnu.org/software/make/manual/html_node/Double_002dColon.html) rule so
+you could define your custom logic for any `Makefile` rule using includes.
 
 ### `all`
 

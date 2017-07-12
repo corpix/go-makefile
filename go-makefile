@@ -94,6 +94,8 @@ clean::
 	rm -rf $(build)
 """
 
+include = "include {0}"
+
 makefile = """
 .DEFAULT_GOAL = all
 
@@ -167,8 +169,11 @@ def format(ctx):
             lambda acc, v: acc+([v] if len(acc) == 0 or acc[-1] != v else []),
             (makefile.format(**nctx).rstrip() + "\n").split("\n"),
             []
-        )
-    ).lstrip()
+        ) + [
+            include.format(v)
+            for v in nctx["include"]
+        ]
+    ).strip() + "\n"
 
 def go_get(package, predicate, commands=[]):
     all_commands = [
@@ -258,6 +263,12 @@ if __name__ == "__main__":
     p.add_argument(
         "--tool",
         help="List of tools to install in addition to the default",
+        nargs="+",
+        default=[]
+    )
+    p.add_argument(
+        "--include",
+        help="List of other Makefile to include",
         nargs="+",
         default=[]
     )

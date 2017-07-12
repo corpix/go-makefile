@@ -11,7 +11,8 @@
   into RPM packages, now I think it is a good idea to have
   predictable build id which should be repeatable and based
   on version.
-* TODO User defined includes
+* DONE User defined includes
+  CLOSED: [2017-07-12 Wed 00:21]
 * TODO Cache file
   Generate a cache file which could be save in project repository
   to regenerate =Makefile= in the future.
