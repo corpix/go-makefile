@@ -9,4 +9,5 @@ addons:
 install:
   - mkdir -p bin
   - ln -s /usr/bin/python3.5 bin/python3
+  - export PATH=$PWD/bin:$PATH
 script: make test
