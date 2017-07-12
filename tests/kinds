@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+set -x
+
+{
+    ./go-makefile --kind application --name test --user me
+    ./go-makefile --kind app         --name test --user me
+    ./go-makefile --kind a           --name test --user me
+} > /dev/null
+
+
+{
+    ./go-makefile --kind package --name test --user me
+    ./go-makefile --kind pack    --name test --user me
+    ./go-makefile --kind p       --name test --user me
+} > /dev/null
+
+
+{
+    ./go-makefile --kind unknown --name test --user me && {
+        echo "Should fail" 1>&2
+        exit 1
+    } || true
+} > /dev/null

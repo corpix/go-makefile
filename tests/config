@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -e
+set -x
+
+{
+    ./go-makefile --kind application --name test --user me --write-config config1.json
+    ./go-makefile --kind app         --name test --user me --write-config config2.json
+
+    ret=0
+    grep -v -F -x -f config*.json || ret=$?
+    rm -rf config*.json || true
+    if [ "$ret" = 0 ]
+    then
+        echo "Config files should be the same for short and long kinds" 1>&2
+        exit 1
+    fi
+} > /dev/null
+
+
+{
+    ./go-makefile --kind application --name test --user me --write-config config1.json
+    ./go-makefile --kind app         --name test --user me --write-config config2.json
+
+    ./go-makefile --kind application --name test --user me --read-config config1.json > makefile1
+    ./go-makefile --kind app         --name test --user me --read-config config2.json > makefile2
+
+    ret=0
+    grep -v -F -x -f makefile* || ret=$?
+    rm -rf config*.json makefile* || true
+    if [ "$ret" = 0 ]
+    then
+        echo "Makefile files should be the same for short and long kinds" 1>&2
+        exit 1
+    fi
+} > /dev/null

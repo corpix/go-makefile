@@ -1,6 +1,8 @@
 go-makefile
 ------------------
 
+[![Build Status](https://travis-ci.org/corpix/go-makefile.svg?branch=master)](https://travis-ci.org/corpix/go-makefile)
+
 Little tool to generate a `Makefile` for your project.
 
 Use it to get a minimal boilerplate with a `Makefile` for your project.
