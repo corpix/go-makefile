@@ -141,19 +141,30 @@ Just a number of processor cores available on the current system.
 
 Version number retrieved from the git version control.
 
+> It could be customized with `--version-generator` argument.
+
 It will look like `100.abcdef` where:
 
 - `100` is a commit count from the first commit to `HEAD`
 - `abcdef` is a short `HEAD` sha1 sum
 
+### `build_id`
+
+Build id which usually written to the binary file and helps identify the build.
+
+It will be derived from the version.
+
+> It could be customized with `--build-id-generator` argument.
+
 ### `ldflags`
 
 Linker flags.
 
-It does two things:
+It passes this variables to go build tools:
 
-- set the version into `$(PACKAGE)/cli.version` variable
-- generates random `NT_GNU_BUILD_ID` which is useful to identify the build
+- `version`
+- `build_id`
+
 
 ## Recommended application layout
 
