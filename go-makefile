@@ -106,7 +106,7 @@ version  := {version_generator}
 {application_variables}
 
 .PHONY: all
-all::
+all:: dependencies
 
 .PHONY: tools
 tools::
