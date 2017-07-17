@@ -134,6 +134,8 @@ def format(ctx):
     tools = indented(
         [
             go_get_bin("github.com/Masterminds/glide"),
+            go_get_bin("github.com/ngdinhtoan/glide-cleanup"),
+            go_get_bin("github.com/sgotti/glide-vc"),
             go_get_bin("github.com/rogpeppe/godef"),
             go_get_bin("github.com/nsf/gocode"),
             go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]),
