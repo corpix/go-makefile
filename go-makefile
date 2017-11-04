@@ -269,6 +269,8 @@ if __name__ == "__main__":
         return nargs
 
     def validate(args):
+        if not args.get("kind", None):
+            raise KeyError("You should specify a kind of your project")
         if args["name"] == "":
             raise KeyError("You should specify name of the project")
         if args["user"] == "":
@@ -290,8 +292,7 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument(
         "--kind",
-        help="Kind of Makefile to generate, should be on of: {}".format(kinds),
-        required=True
+        help="Kind of Makefile to generate, should be on of: {}".format(kinds)
     )
     p.add_argument(
         "--name",
