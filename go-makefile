@@ -262,7 +262,10 @@ if __name__ == "__main__":
 
     def normalize(args):
         nargs = args.copy()
-        nargs["kind"] = match(kinds, args["kind"].lower().strip())
+        nargs["kind"] = match(
+            kinds,
+            args["kind"].lower().strip(),
+        )
         return nargs
 
     def validate(args):
@@ -287,7 +290,8 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument(
         "--kind",
-        help="Kind of Makefile to generate, should be on of: {}".format(kinds)
+        help="Kind of Makefile to generate, should be on of: {}".format(kinds),
+        required=True
     )
     p.add_argument(
         "--name",
