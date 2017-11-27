@@ -197,7 +197,7 @@ def go_get_src(package, commands=[]):
 
 def go_get_bin(package, commands=[]):
     return go_get(
-        package,
+        package + "/...",
         """! -e "$(GOPATH)"/bin/{}""".format(basename(package)),
         commands
     )
