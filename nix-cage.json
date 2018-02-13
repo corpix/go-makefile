@@ -1,0 +1,20 @@
+{
+    "mounts": {
+        "rw": [
+            ["~/projects/cache", "~"],
+            ["~/.emacs.d",       "~/.emacs.d"],
+            "."
+        ],
+        "ro": [
+            "~/.bashrc",
+            "~/.profile",
+            "~/.config/fish",
+            "~/.gitconfig"
+        ]
+    },
+    "environment": {
+        "PATH":     "$HOME/.local/bin:$HOME/projects/bin:$PATH",
+        "NIX_PATH": "$NIX_PATH",
+        "TERM":     "screen-256color"
+    }
+}
