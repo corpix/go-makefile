@@ -6,3 +6,7 @@ all: test
 .PHONY: test
 test:
 	./tests/*
+
+.PHONY: lint
+lint:
+	pyflakes go-makefile

@@ -2,13 +2,8 @@ with import <nixpkgs> {};
 stdenv.mkDerivation {
   name = "nix-cage-shell";
   buildInputs = [
-    gocode
-    glide
-    godef
     python36
+    python36Packages.pyflakes
     gnumake
   ];
-  shellHook = ''
-    export GOPATH=~/projects
-  '';
 }

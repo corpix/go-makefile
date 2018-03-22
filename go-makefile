@@ -1,29 +1,8 @@
-#!/usr/bin/env python3
-# The MIT License (MIT)
-
-# Copyright © 2015 Dmitry Moskowski
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+#! /usr/bin/env python
 from argparse import ArgumentParser
 from functools import reduce
 from json import load as json_unmarshal, dump as json_marshal
-from os.path import basename, expanduser, abspath
+from os.path import expanduser, abspath
 import sys
 
 package_kind     = "package"
@@ -43,22 +22,15 @@ package  := {host}/{user}/$(name)
 package_targets = """
 .PHONY: test
 test:: dependencies
-	go test -v \\
-           $(shell glide novendor)
+	go test -v $(shell glide novendor)
 
 .PHONY: bench
 bench:: dependencies
-	go test        \\
-           -bench=. -v \\
-           $(shell glide novendor)
+	go test -bench=. -v $(shell glide novendor)
 
 .PHONY: lint
 lint:: dependencies
-	go vet $(shell glide novendor)
-	gometalinter                     \\
-		--deadline=5m            \\
-		--concurrency=$(numcpus) \\
-		$(shell glide novendor)
+	go vet -v $(shell glide novendor)
 
 .PHONY: check
 check:: lint test
@@ -69,10 +41,10 @@ check:: lint test
 # (it will include package_variables + package_targets)
 
 application_variables = """
-build    := ./build
-build_id := {build_id_generator}
-ldflags  := -X $(package)/{version_variable}=$(version) \\
-            -B $(build_id)
+build       := ./build
+build_id    := {build_id_generator}
+ldflags     := -X $(package)/{version_variable}=$(version) -B $(build_id)
+build_flags := -a -ldflags "$(ldflags)" -o build/$(name)
 """
 
 application_targets = """
@@ -83,16 +55,10 @@ all:: $(name)
 $(name):: dependencies
 	mkdir -p $(build)
 	@echo "Build id: $(build_id)"
-	go build -a -ldflags "$(ldflags)" -v \\
-                 -o build/$(name)            \\
-                 $(package)/$(name)
+	go build $(build_flags) -v $(package)/$(name)
 
 .PHONY: build
 build:: $(name)
-
-.PHONY: clean
-clean::
-	rm -rf $(build)
 """
 
 include = "include {0}"
@@ -108,21 +74,17 @@ version  := {version_generator}
 .PHONY: all
 all:: dependencies
 
-.PHONY: tools
-tools::
-	{tools}
-
 .PHONY: dependencies
-dependencies:: tools
+dependencies::
 	glide install
-
-.PHONY: clean
-clean:: tools
-	glide cache-clear
 
 {package_targets}
 
 {application_targets}
+
+.PHONY: clean
+clean::
+	git clean -xddff
 """
 
 def indented(l, level=1, prefix="\t", suffix="\n"):
@@ -131,22 +93,7 @@ def indented(l, level=1, prefix="\t", suffix="\n"):
     )
 
 def format(ctx):
-    tools = indented(
-        [
-            go_get_bin("github.com/Masterminds/glide"),
-            go_get_bin("github.com/ngdinhtoan/glide-cleanup"),
-            go_get_bin("github.com/sgotti/glide-vc"),
-            go_get_bin("github.com/rogpeppe/godef"),
-            go_get_bin("github.com/nsf/gocode"),
-            go_get_bin("github.com/alecthomas/gometalinter", ["gometalinter --install"]),
-            go_get_src("github.com/stretchr/testify/assert"),
-        ] + [go_get_bin(tool) for tool in ctx["tool"]]
-    )
     nctx = ctx.copy()
-    nctx.update(
-        {"tools": tools}
-    )
-
     package = {
         "package_variables": "",
         "package_targets": "",
@@ -186,20 +133,6 @@ def go_get(package, predicate, commands=[]):
     return """@if [ {predicate} ]; then {commands}; fi""".format(
         predicate=predicate,
         commands=" && ".join(all_commands)
-    )
-
-def go_get_src(package, commands=[]):
-    return go_get(
-        package,
-        """! -e "$(GOPATH)"/src/{}""".format(package),
-        commands
-    )
-
-def go_get_bin(package, commands=[]):
-    return go_get(
-        package + "/...",
-        """! -e "$(GOPATH)"/bin/{}""".format(basename(package)),
-        commands
     )
 
 def main(args):
@@ -306,12 +239,6 @@ if __name__ == "__main__":
     p.add_argument(
         "--user",
         help="User to hardcode into the package name as part of url"
-    )
-    p.add_argument(
-        "--tool",
-        help="List of tools to install in addition to the default",
-        nargs="+",
-        default=[]
     )
     p.add_argument(
         "--include",
