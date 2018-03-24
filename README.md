@@ -30,23 +30,6 @@ This will write content to the `Makefile` in the current directory.
 
 --------------------------------------------------------------------------------------
 
-If you need additional tools to be installed automatically by `Makefile` then
-you could pass `--tool` parameter in this manner:
-
-``` shell
-go-makefile                        \
-    --kind app                     \
-    --user your-name               \
-    --name project-name            \
-    --tool                         \
-    github.com/corpix/awesome-tool \
-    github.com/corpix/way-cooler-tool
-```
-
-All of them will be appended to the list of the tools which installed by default.
-
---------------------------------------------------------------------------------------
-
 If you need additional includes you could pass `--include` parameter in this manner:
 
 ``` shell
@@ -94,19 +77,6 @@ For `--kind package`:
 For `--kind application`:
 - install all dependencies
 - build an application
-
-### `tools`
-
-> Available for `--kind package` and `--kind application`.
-
-Install required tools:
-
-- [glide](github.com/Masterminds/glide)
-- [godef](github.com/rogpeppe/godef)
-- [gocode](github.com/nsf/gocode)
-- [testify/assert](github.com/stretchr/testify/assert)
-- [gometalinter](github.com/alecthomas/gometalinter)
-- and all linters supported my gometalinter
 
 ### `dependencies`
 
