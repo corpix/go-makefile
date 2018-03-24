@@ -82,7 +82,7 @@ For `--kind application`:
 
 > Available for `--kind package` and `--kind application`.
 
-Install dependencies with glide.
+Install dependencies with `dep`.
 
 ### `test`
 
