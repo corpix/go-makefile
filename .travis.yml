@@ -1,13 +1,12 @@
-distribution: ubuntu
-addons:
-  apt:
-    sources:
-      - deadsnakes
-      - sourceline: 'ppa:ubuntu-toolchain-r/test'
-    packages:
-      - python3.5
-install:
-  - mkdir -p bin
-  - ln -s /usr/bin/python3.5 bin/python3
-  - export PATH=$PWD/bin:$PATH
-script: make test
+language: nix
+script: |
+  bash -c '
+    set -e
+    set -x
+
+    nixpkgs_rev=a682ba23d49cd13c92922af3d5dc44efd60ae9e7
+    curl -L https://github.com/NixOS/nixpkgs/archive/${nixpkgs_rev}.tar.gz | tar -xz -C $HOME
+    export NIX_PATH=nixpkgs=$HOME/nixpkgs-${nixpkgs_rev}
+
+    nix-shell --command "make test"
+  '
