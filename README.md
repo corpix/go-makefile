@@ -23,14 +23,52 @@ Application `Makefile` will contain everything the package needs but not vice ve
 > `package     -> pack -> p` <br/>
 
 ``` shell
-go-makefile --kind app --user your-name --name project-name > Makefile
+$ cd $GOPATH/src/github.com/corpix/some-package
+$ go-makefile --write-config .go-makefile.json > Makefile
 ```
 
-This will write content to the `Makefile` in the current directory.
+This will write code to the `Makefile` in current directory:
+
+``` makefile
+.DEFAULT_GOAL = all
+
+version  := $(shell git rev-list --count HEAD).$(shell git rev-parse --short HEAD)
+
+name     := some-package
+package  := github.com/corpix/$(name)
+packages := $(shell go list ./... | grep -v /vendor/)
+
+.PHONY: all
+all:: dependencies
+all:: build
+
+.PHONY: dependencies
+dependencies::
+        dep ensure
+
+.PHONY: test
+test::
+        go test -v $(packages)
+
+.PHONY: bench
+bench::
+        go test -bench=. -v $(packages)
+
+.PHONY: lint
+lint::
+        go vet -v $(packages)
+
+.PHONY: check
+check:: lint test
+
+.PHONY: clean
+clean::
+        git clean -xddff
+```
 
 --------------------------------------------------------------------------------------
 
-If you need additional includes you could pass `--include` parameter in this manner:
+If you need additional includes(or other `kind`, or specify github username and project) you could pass `--include` parameter in this manner:
 
 ``` shell
 go-makefile             \
@@ -41,6 +79,8 @@ go-makefile             \
     build.mk            \
     ci.mk
 ```
+
+> Includes could be used to extend the builtin Makefile targets, all targets are «(double-colon)[#goals]».
 
 All of them will be appended to the list of the includes which will be appended to the end of the `Makefile`.
 
@@ -78,11 +118,11 @@ For `--kind application`:
 - install all dependencies
 - build an application
 
-### `dependencies`
+### `build`
 
 > Available for `--kind package` and `--kind application`.
 
-Install dependencies with `dep`.
+Run `go build` against project sources. For project name `test` entrypoint should be in `test/main.go`.
 
 ### `test`
 
@@ -95,6 +135,12 @@ Will reach `dependencies` target after that will run tests for project package.
 > Available for `--kind package` and `--kind application`.
 
 Will reach `dependencies` target after that will run tests and benchmarks for project package.
+
+### `dependencies`
+
+> Available for `--kind package` and `--kind application`.
+
+Install dependencies with `dep`.
 
 ### `$(name)`
 
@@ -118,10 +164,6 @@ Package of the project.
 This is an absolute package name which should be used to import your project like any other go project would do.
 
 It depends on the `--project` flag which you should specify to generate a `Makefile`.
-
-### `numcpus`
-
-Just a number of processor cores available on the current system.
 
 ### `version`
 

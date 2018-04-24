@@ -2,7 +2,8 @@
 from argparse import ArgumentParser
 from functools import reduce
 from json import load as json_unmarshal, dump as json_marshal
-from os.path import expanduser, abspath
+from os.path import expanduser, abspath, basename
+from os import environ, getcwd
 import sys
 
 package_kind     = "package"
@@ -17,23 +18,20 @@ kinds = [
 package_variables = """
 name     := {name}
 package  := {host}/{user}/$(name)
-
-# XXX: Fuck you golang!
-# 99% of time having vendor in a wildcard result is not what you want!
 packages := $(shell go list ./... | grep -v /vendor/)
 """
 
 package_targets = """
 .PHONY: test
-test:: dependencies
+test::
 	go test -v $(packages)
 
 .PHONY: bench
-bench:: dependencies
+bench::
 	go test -bench=. -v $(packages)
 
 .PHONY: lint
-lint:: dependencies
+lint::
 	go vet -v $(packages)
 
 .PHONY: check
@@ -70,13 +68,13 @@ include = "include {0}"
 makefile = """
 .DEFAULT_GOAL = all
 
-numcpus  := $(shell cat /proc/cpuinfo | grep '^processor\s*:' | wc -l)
 version  := {version_generator}
 {package_variables}
 {application_variables}
 
 .PHONY: all
 all:: dependencies
+all:: build
 
 .PHONY: dependencies
 dependencies::
@@ -128,16 +126,6 @@ def format(ctx):
             for v in nctx["include"]
         ]
     ).strip() + "\n"
-
-def go_get(package, predicate, commands=[]):
-    all_commands = [
-        "go get {0}".format(package)
-    ] + commands
-
-    return """@if [ {predicate} ]; then {commands}; fi""".format(
-        predicate=predicate,
-        commands=" && ".join(all_commands)
-    )
 
 def main(args):
     sys.stdout.write(
@@ -229,11 +217,13 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument(
         "--kind",
-        help="Kind of Makefile to generate, should be on of: {}".format(kinds)
+        help="Kind of Makefile to generate, should be on of: {}".format(kinds),
+        default="package"
     )
     p.add_argument(
         "--name",
-        help="Project name to hardcode into the Makefile"
+        help="Project name to hardcode into the Makefile",
+        default=basename(getcwd())
     )
     p.add_argument(
         "--host",
@@ -242,7 +232,8 @@ if __name__ == "__main__":
     )
     p.add_argument(
         "--user",
-        help="User to hardcode into the package name as part of url"
+        help="User to hardcode into the package name as part of url",
+        default=environ["USER"]
     )
     p.add_argument(
         "--include",
@@ -291,3 +282,4 @@ if __name__ == "__main__":
             )
         )
     )
+
